@@ -15,16 +15,19 @@ st.markdown(
     f"""
     <style>
         body {{
-            background-color: #e6eef3;
-            color: #000000;
+            background-color: #005f87;
+            color: #ffffff;
             font-family: 'Arial', sans-serif;
         }}
         .stApp {{
-            background-color: #e6eef3;
+            background-color: #005f87;
+        }}
+        h1, h2, h3, h4, h5, h6, p, label {{
+            color: #ffffff !important;
         }}
         .stButton>button {{
-            background-color: {PRIMARY_COLOR};
-            color: #ffffff;
+            background-color: #ffffff;
+            color: #005f87;
             border: none;
             border-radius: 6px;
             padding: 10px 20px;
@@ -33,26 +36,26 @@ st.markdown(
             transition: all 0.2s ease-in-out;
         }}
         .stButton>button:hover {{
-            background-color: #003f5c;
+            background-color: #f0f0f0;
+            color: #003f5c;
             transform: scale(1.05);
+        }}
+        .stRadio>div {{
+            background-color: #ffffff;
+            color: #000000;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
         }}
         .block-container {{
             max-width: 700px;
             padding-top: 2rem;
         }}
-        h1 {{
-            color: {PRIMARY_COLOR};
-            font-weight: 700;
-        }}
-        .stRadio>div {{
-            background-color: white;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
-        }}
     </style>
     """,
     unsafe_allow_html=True,
+)
+
 )
 
 # -----------------------
