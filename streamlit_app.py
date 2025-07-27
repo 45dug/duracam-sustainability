@@ -8,14 +8,19 @@ from fpdf import FPDF
 # -----------------------
 st.set_page_config(page_title="DURACAM Sustainability Assessment", layout="centered")
 PRIMARY_COLOR = "#005f87"
+BACKGROUND_COLOR = "#f1f5f9"  # Light, professional background
 
+# Custom CSS
 st.markdown(
     f"""
     <style>
         body {{
-            background-color: #f9f9f9;
+            background-color: {BACKGROUND_COLOR};
             color: #000000;
             font-family: 'Arial', sans-serif;
+        }}
+        .stApp {{
+            background-color: {BACKGROUND_COLOR};
         }}
         .stButton>button {{
             background-color: {PRIMARY_COLOR};
@@ -52,7 +57,10 @@ st.markdown(
 # -----------------------
 # HEADER
 # -----------------------
-st.image("https://via.placeholder.com/600x100.png?text=DURACAM+Sustainability+Assessment", use_column_width=True)
+st.image(
+    "https://via.placeholder.com/600x100.png?text=DURACAM+Sustainability+Assessment",
+    use_container_width=True
+)
 st.title("🌱 DURACAM Sustainability Assessment")
 st.markdown("Evaluate your company's sustainability performance across five core dimensions and generate a polished PDF report.")
 
