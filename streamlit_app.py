@@ -4,42 +4,60 @@ import plotly.express as px
 from fpdf import FPDF
 
 # -----------------------
-# CONFIGURATION
+# CONFIGURATION & THEME
 # -----------------------
 st.set_page_config(page_title="DURACAM Sustainability Assessment", layout="centered")
 PRIMARY_COLOR = "#005f87"
 
-# Custom CSS for branding & WCAG compliance
 st.markdown(
     f"""
     <style>
         body {{
+            background-color: #f9f9f9;
             color: #000000;
-            background-color: #ffffff;
+            font-family: 'Arial', sans-serif;
         }}
         .stButton>button {{
             background-color: {PRIMARY_COLOR};
-            color: white;
-            border-radius: 8px;
-            padding: 0.5em 1em;
-            font-size: 1.1em;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
         }}
-        .stProgress .st-bo {{
-            background-color: {PRIMARY_COLOR};
+        .stButton>button:hover {{
+            background-color: #003f5c;
+            transform: scale(1.05);
+        }}
+        .block-container {{
+            max-width: 700px;
+            padding-top: 2rem;
+        }}
+        h1 {{
+            color: {PRIMARY_COLOR};
+            font-weight: 700;
+        }}
+        .stRadio>div {{
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
         }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-st.title("🌱 DURACAM Sustainability Assessment Platform")
-st.markdown(
-    "Evaluate your company's sustainability performance, view investor-ready insights, "
-    "and generate a branded PDF report."
-)
+# -----------------------
+# HEADER
+# -----------------------
+st.image("https://via.placeholder.com/600x100.png?text=DURACAM+Sustainability+Assessment", use_column_width=True)
+st.title("🌱 DURACAM Sustainability Assessment")
+st.markdown("Evaluate your company's sustainability performance across five core dimensions and generate a polished PDF report.")
 
 # -----------------------
-# QUESTIONS & STRUCTURE
+# QUESTIONS
 # -----------------------
 categories = {
     "Carbon": ["Process choices impact", "Emissions tracking effectiveness"],
@@ -49,72 +67,78 @@ categories = {
     "Profitability": ["Pricing strategy", "Green marketing initiatives"],
 }
 
-responses = {}
-total_scores = {}
+scores = {}
 
 with st.form("assessment_form"):
-    st.subheader("Rate each factor (1 = Very Poor, 5 = Excellent):")
+    st.subheader("🔍 Please rate each factor (1 = Very Poor, 5 = Excellent):")
 
     for category, questions in categories.items():
         st.markdown(f"### {category}")
-        cat_scores = []
+        category_scores = []
         for q in questions:
-            score = st.radio(q, options=[1, 2, 3, 4, 5], horizontal=True, key=f"{category}_{q}")
-            cat_scores.append(score)
-        avg = (sum(cat_scores) / len(cat_scores)) * 20  # Convert to 0-100 scale
-        total_scores[category] = avg
+            score = st.radio(
+                f"{q}",
+                options=[1, 2, 3, 4, 5],
+                horizontal=True,
+                key=f"{category}_{q}"
+            )
+            category_scores.append(score)
+        scores[category] = (sum(category_scores) / len(category_scores)) * 20  # Convert to 0-100
 
-    submitted = st.form_submit_button("Calculate Results")
+    submitted = st.form_submit_button("Calculate My Sustainability Score")
 
 # -----------------------
 # RESULTS
 # -----------------------
 if submitted:
-    st.success("Assessment completed!")
+    st.success("✅ Assessment completed! See your results below.")
 
-    df = pd.DataFrame(list(total_scores.items()), columns=["Category", "Score"])
-    fig = px.pie(df, names="Category", values="Score", title="Sustainability Score Distribution", color_discrete_sequence=px.colors.sequential.Blues)
+    df = pd.DataFrame(list(scores.items()), columns=["Category", "Score"])
+
+    fig = px.pie(
+        df,
+        names="Category",
+        values="Score",
+        title="Your Sustainability Score Breakdown",
+        color_discrete_sequence=px.colors.sequential.Blues
+    )
+    fig.update_traces(textinfo='percent+label', pull=[0.05]*len(scores))
     st.plotly_chart(fig, use_container_width=True)
 
-    # -----------------------
-    # PRACTICE RECOMMENDATIONS
-    # -----------------------
-    st.subheader("Recommended Practices")
-    for category, score in total_scores.items():
+    avg_score = sum(scores.values()) / len(scores)
+    st.metric("🌟 Average Sustainability Score", f"{avg_score:.1f} / 100")
+
+    # Recommendations
+    st.subheader("📌 Recommendations")
+    for category, score in scores.items():
         if score < 50:
-            st.warning(f"**{category}:** Needs major improvements. Focus on foundational practices.")
+            st.warning(f"**{category}:** Needs significant improvement. Start with basic sustainability actions.")
         elif score < 75:
-            st.info(f"**{category}:** Moderate performance. Target advanced optimizations.")
+            st.info(f"**{category}:** Decent progress. Focus on optimizing your strategies.")
         else:
-            st.success(f"**{category}:** Strong sustainability practices in place.")
+            st.success(f"**{category}:** Excellent! Keep maintaining strong practices.")
 
     # -----------------------
-    # ROI & BENCHMARKS
+    # PDF Report
     # -----------------------
-    st.subheader("Investor Features")
-    avg_score = sum(total_scores.values()) / len(total_scores)
-    roi_estimate = round(avg_score * 1.5, 2)
-    st.write(f"**Estimated ROI Improvement:** {roi_estimate}%")
-    st.write("**Benchmark:** Top industry performers average 80–85% across all categories.")
-
-    st.write("**Case Study Example:** Company X improved its circular economy index by 40%, saving $2M annually.")
-
-    # -----------------------
-    # PDF REPORT GENERATION
-    # -----------------------
-    def generate_pdf(scores: dict, avg: float) -> bytes:
+    def generate_pdf(data: dict, avg: float) -> bytes:
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", "B", 16)
+        pdf.set_font("Arial", "B", 18)
+        pdf.set_text_color(0, 95, 135)
         pdf.cell(0, 10, "DURACAM Sustainability Report", ln=True, align="C")
-        pdf.set_font("Arial", "", 12)
-        for cat, sc in scores.items():
+        pdf.set_font("Arial", size=12)
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(10)
+        for cat, sc in data.items():
             pdf.cell(0, 10, f"{cat}: {sc:.1f}/100", ln=True)
         pdf.cell(0, 10, f"Average Score: {avg:.1f}/100", ln=True)
-        pdf.cell(0, 10, f"Estimated ROI Improvement: {roi_estimate}%", ln=True)
-        pdf.output("report.pdf")
-        with open("report.pdf", "rb") as f:
+        pdf.ln(5)
+        pdf.multi_cell(0, 10, "Thank you for using the DURACAM Sustainability Assessment. This report reflects your current performance and highlights areas for improvement.")
+        pdf.output("duracam_report.pdf")
+        with open("duracam_report.pdf", "rb") as f:
             return f.read()
 
-    pdf_data = generate_pdf(total_scores, avg_score)
-    st.download_button("📥 Download PDF Report", pdf_data, "DURACAM_Sustainability_Report.pdf", "application/pdf")
+    pdf_file = generate_pdf(scores, avg_score)
+    st.download_button("📥 Download Your PDF Report", pdf_file, "DURACAM_Sustainability_Report.pdf", "application/pdf")
+
