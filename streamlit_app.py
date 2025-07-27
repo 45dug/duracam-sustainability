@@ -15,12 +15,12 @@ st.markdown(
     f"""
     <style>
         body {{
-            background-color: {BACKGROUND_COLOR};
+            background-color: #e6eef3;
             color: #000000;
             font-family: 'Arial', sans-serif;
         }}
         .stApp {{
-            background-color: {BACKGROUND_COLOR};
+            background-color: #e6eef3;
         }}
         .stButton>button {{
             background-color: {PRIMARY_COLOR};
@@ -46,8 +46,9 @@ st.markdown(
         }}
         .stRadio>div {{
             background-color: white;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
         }}
     </style>
     """,
