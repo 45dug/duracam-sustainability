@@ -1,252 +1,194 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from PIL import Image
-import base64
 
 # ======================
-# 1. PREMIUM CONFIGURATION
+# 1. HIGH-CONTRAST CONFIG
 # ======================
 st.set_page_config(
-    page_title="DURACAM Sustainability Intelligence",
+    page_title="DURACAM Sustainability",
     page_icon="♻️",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# Premium CSS with animated gradient
+# Accessibility-focused CSS
 st.markdown(f"""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
     
     body {{
-        font-family: 'Montserrat', sans-serif;
-        background: linear-gradient(-45deg, #e3f2fd, #bbdefb, #90caf9, #64b5f6);
-        background-size: 400% 400%;
-        animation: gradient 15s ease infinite;
+        font-family: 'Open Sans', sans-serif;
+        background-color: #ffffff;
     }}
-    @keyframes gradient {{
-        0% {{ background-position: 0% 50%; }}
-        50% {{ background-position: 100% 50%; }}
-        100% {{ background-position: 0% 50%; }}
-    }}
-    .main-container {{
-        background-color: rgba(255, 255, 255, 0.93);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(8px);
+    .header {{
+        background: #005f87;
+        color: white;
         padding: 2rem;
-        margin: 2rem auto;
-        max-width: 1200px;
+        margin-bottom: 2rem;
     }}
     .assessment-card {{
         background: white;
-        border-radius: 12px;
+        border-radius: 8px;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        border-left: 5px solid #1976d2;
-        transition: transform 0.3s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #005f87;
     }}
-    .assessment-card:hover {{
-        transform: translateY(-5px);
-    }}
-    .stRadio > div > label {{
-        background: #e3f2fd !important;
+    .stRadio > div > div > label {{
+        font-size: 1rem !important;
+        color: #333333 !important;
+        padding: 12px 16px !important;
+        background: #f8f9fa !important;
         border-radius: 8px !important;
-        padding: 12px !important;
         margin: 8px 0 !important;
-        border: 1px solid #bbdefb !important;
+    }}
+    .stRadio > div > div > label:hover {{
+        background: #e9ecef !important;
+    }}
+    h1, h2, h3 {{
+        color: #005f87 !important;
     }}
     .stButton > button {{
-        background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%) !important;
+        background: #005f87 !important;
         color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 12px 24px !important;
         font-weight: 600 !important;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        padding: 12px 24px !important;
     }}
-    .high-impact-card {{
-        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-        border-left: 5px solid #388e3c;
+    .high-impact {{
+        background: #e6f7ff;
+        border-left: 4px solid #0088cc;
     }}
 </style>
 """, unsafe_allow_html=True)
 
 # ======================
-# 2. INVESTOR-READY HEADER
+# 2. HIGH-VISIBILITY HEADER
 # ======================
-col1, col2 = st.columns([4,1])
-with col1:
-    st.markdown("<h1 style='color:#0d47a1;margin-bottom:0;'>DURACAM</h1>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#1976d2;margin-top:0;'>Sustainability Impact Platform</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:1.1rem;color:#424242;'>AI-powered sustainability assessment and high-impact practice recommendations</p>", unsafe_allow_html=True)
-with col2:
-    st.image("https://via.placeholder.com/150x150/1976d2/FFFFFF?text=DC", width=100)
+st.markdown("""
+<div class="header">
+    <h1 style="margin:0;font-weight:700;">DURACAM</h1>
+    <h2 style="margin:0;font-weight:600;">Sustainability Impact Platform</h2>
+    <p style="margin:0.5rem 0 0 0;font-size:1.1rem;">Clear, actionable sustainability assessments</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ======================
-# 3. COMPREHENSIVE ASSESSMENT
+# 3. HIGH-CONTRAST ASSESSMENT
 # ======================
 if 'scores' not in st.session_state:
     st.session_state.scores = {
-        'Carbon': {"score": 0, "practices": []},
-        'Energy': {"score": 0, "practices": []},
-        'Supply Chain': {"score": 0, "practices": []},
-        'Circular Economy': {"score": 0, "practices": []},
-        'Profitability Impact': {"score": 0, "practices": []}
+        'Carbon': 0,
+        'Energy': 0,
+        'Supply Chain': 0,
+        'Circular': 0,
+        'Profit Impact': 0
     }
 
-# High-impact practices database
-PRACTICES_DB = {
-    'Carbon': [
-        "Implement carbon capture technology",
-        "Switch to renewable energy sources",
-        "Conduct monthly emissions audits"
-    ],
-    'Energy': [
-        "Install smart energy monitoring systems",
-        "Upgrade to ENERGY STAR® equipment",
-        "Implement waste-to-energy programs"
-    ],
-    'Supply Chain': [
-        "Develop sustainable supplier certification",
-        "Optimize logistics with AI routing",
-        "Implement blockchain for transparency"
-    ],
-    'Circular Economy': [
-        "Launch product take-back program",
-        "Design for disassembly guidelines",
-        "Create secondary refurbished market"
-    ],
-    'Profitability Impact': [
-        "Develop green premium product lines",
-        "Obtain B Corp certification",
-        "Implement sustainability-linked bonuses"
-    ]
-}
-
-with st.form("sustainability_assessment"):
+with st.form("assessment"):
     st.markdown("### Sustainability Assessment")
     
-    # Carbon Management
+    # Carbon Management - Bold Questions
     with st.container():
         st.markdown("<div class='assessment-card'>", unsafe_allow_html=True)
-        st.markdown("#### Carbon Management")
+        st.markdown("#### <span style='color:#005f87;'>Carbon Management</span>", unsafe_allow_html=True)
         q1 = st.radio(
-            "How would you rate your emission control systems?",
-            ["None", "Basic", "Standard", "Advanced", "Industry leading"],
+            "**How effective are your emission controls?**",
+            ["❌ Not implemented", "⚠️ Basic systems", "🟡 Moderate controls", 
+             "✅ Effective systems", "🏆 Industry leading"],
             key="carbon1"
         )
         q2 = st.radio(
-            "Regulatory compliance status?",
-            ["Non-compliant", "Partial", "Compliant", "Exceeds", "Exemplary"],
+            "**Regulatory compliance status?**",
+            ["❌ Non-compliant", "⚠️ Partial compliance", "🟡 Fully compliant", 
+             "✅ Exceeds requirements", "🏆 Exemplary performance"],
             key="carbon2"
         )
-        score = (["None", "Basic", "Standard", "Advanced", "Industry leading"].index(q1) + 1) * 2 + \
-                (["Non-compliant", "Partial", "Compliant", "Exceeds", "Exemplary"].index(q2) + 1) * 2
-        st.session_state.scores['Carbon']["score"] = score
-        st.session_state.scores['Carbon']["practices"] = PRACTICES_DB['Carbon'][:min(3, score//3)]
+        st.session_state.scores['Carbon'] = (
+            ["❌ Not implemented", "⚠️ Basic systems", "🟡 Moderate controls", 
+             "✅ Effective systems", "🏆 Industry leading"].index(q1) * 5 +
+            ["❌ Non-compliant", "⚠️ Partial compliance", "🟡 Fully compliant", 
+             "✅ Exceeds requirements", "🏆 Exemplary performance"].index(q2) * 5
+        )
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Energy Efficiency
+    # Energy Efficiency - Bold Questions
     with st.container():
         st.markdown("<div class='assessment-card'>", unsafe_allow_html=True)
-        st.markdown("#### Energy Efficiency")
+        st.markdown("#### <span style='color:#005f87;'>Energy Efficiency</span>", unsafe_allow_html=True)
         q1 = st.radio(
-            "Equipment upgrade status?",
-            ["No upgrades", "Some upgrades", "50% upgraded", "Mostly upgraded", "Fully optimized"],
+            "**Equipment upgrade status?**",
+            ["❌ No upgrades", "⚠️ Some upgrades", "🟡 50% upgraded", 
+             "✅ Mostly upgraded", "🏆 Fully optimized"],
             key="energy1"
         )
         q2 = st.radio(
-            "Waste diversion rate?",
-            ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%"],
+            "**Waste diversion rate?**",
+            ["❌ 0-20%", "⚠️ 20-40%", "🟡 40-60%", 
+             "✅ 60-80%", "🏆 80-100%"],
             key="energy2"
         )
-        score = (["No upgrades", "Some upgrades", "50% upgraded", "Mostly upgraded", "Fully optimized"].index(q1) + 1) * 2 + \
-                (["0-20%", "20-40%", "40-60%", "60-80%", "80-100%"].index(q2) + 1) * 2
-        st.session_state.scores['Energy']["score"] = score
-        st.session_state.scores['Energy']["practices"] = PRACTICES_DB['Energy'][:min(3, score//3)]
+        st.session_state.scores['Energy'] = (
+            ["❌ No upgrades", "⚠️ Some upgrades", "🟡 50% upgraded", 
+             "✅ Mostly upgraded", "🏆 Fully optimized"].index(q1) * 5 +
+            ["❌ 0-20%", "⚠️ 20-40%", "🟡 40-60%", 
+             "✅ 60-80%", "🏆 80-100%"].index(q2) * 5
+        )
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Add other categories following same pattern...
-
-    submitted = st.form_submit_button("🚀 Generate Impact Report", type="primary")
+    submitted = st.form_submit_button("📊 Generate Results", type="primary")
 
 # ======================
-# 4. INVESTOR-READY VISUALIZATION
+# 4. ULTRA-READABLE RESULTS
 # ======================
 if submitted:
     st.markdown("---")
-    st.header("Sustainability Impact Dashboard")
+    st.header("Assessment Results")
     
-    # Create two columns
-    col1, col2 = st.columns([2,1])
+    # Two-column layout
+    col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Interactive Pie Chart
+        # High-contrast bar chart
         df = pd.DataFrame({
             "Category": list(st.session_state.scores.keys()),
-            "Score": [v["score"] for v in st.session_state.scores.values()]
+            "Score": list(st.session_state.scores.values())
         })
-        fig = px.pie(
-            df, 
-            values='Score', 
-            names='Category',
-            hole=0.3,
-            color_discrete_sequence=px.colors.sequential.Blues_r,
-            title="Sustainability Performance Breakdown"
+        fig = px.bar(
+            df,
+            x="Category",
+            y="Score",
+            color="Category",
+            color_discrete_sequence=["#005f87", "#0088cc", "#00aaff", "#73c2ff", "#b3e0ff"],
+            text="Score",
+            title="<b>Performance by Category</b>"
         )
-        fig.update_traces(textposition='inside', textinfo='percent+label')
+        fig.update_layout(
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(size=14),
+            yaxis_range=[0,50]
+        )
+        fig.update_traces(textfont_size=14, textangle=0, textposition="outside")
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # High-impact Practices
-        st.markdown("### 🔥 High-Impact Practices")
-        for category, data in st.session_state.scores.items():
-            if data["practices"]:
-                with st.expander(f"{category} (Score: {data['score']}/20)"):
-                    for practice in data["practices"]:
-                        st.markdown(f"✅ {practice}")
-        
-        # Download Report
-        st.download_button(
-            label="📄 Download Full Report",
-            data=pd.DataFrame(st.session_state.scores).to_csv(),
-            file_name="duracam_sustainability_report.csv",
-            mime="text/csv"
-        )
+        # High-impact practices
+        st.markdown("### 🚀 Recommended Actions")
+        for category, score in st.session_state.scores.items():
+            if score < 15:
+                st.markdown(f"<div class='assessment-card high-impact'><b>{category}</b><br>Priority improvement area</div>", 
+                           unsafe_allow_html=True)
+            elif score > 35:
+                st.markdown(f"<div class='assessment-card'><b>{category}</b><br>Strength to leverage</div>", 
+                           unsafe_allow_html=True)
 
 # ======================
-# 5. INVESTOR FEATURES
-# ======================
-st.markdown("---")
-with st.expander("💼 Investor Summary", expanded=False):
-    st.markdown("""
-    **Market Differentiation:**
-    - First AI-driven sustainability impact platform
-    - Proprietary practice recommendation engine
-    - Verified 30-50% ROI on implemented practices
-    
-    **Revenue Model:**
-    - SaaS subscription (Enterprise: $50k/yr)
-    - Implementation consulting (20% margin)
-    - Carbon credit marketplace (5% transaction fee)
-    
-    **Projections:**
-    - Year 1: $2M ARR (40 clients)
-    - Year 3: $15M ARR (300 clients)
-    """)
-
-# ======================
-# 6. PREMIUM FOOTER
+# 5. CLEAN FOOTER
 # ======================
 st.markdown("---")
 st.markdown("""
-<div style="text-align:center;color:#616161;font-size:0.9em;padding:1.5rem;">
-    DURACAM Sustainability Intelligence Platform • v4.0 • 
-    <a href="#" style="color:#1976d2;">Investor Deck</a> • 
-    <a href="#" style="color:#1976d2;">Case Studies</a> • 
-    <a href="#" style="color:#1976d2;">Contact CEO</a>
+<div style="text-align:center;color:#666;font-size:0.9em;padding:1rem;">
+    © 2025 DURACAM | <span style="color:#005f87;">Contact</span> | 
+    <span style="color:#005f87;">Privacy</span> | <span style="color:#005f87;">Terms</span>
 </div>
 """, unsafe_allow_html=True)
