@@ -1,109 +1,92 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-import numpy as np
-from fpdf import FPDF
 
-st.set_page_config(page_title="DURACAM Sustainability Tool", layout="centered")
+# Page config
+st.set_page_config(page_title="DURACAM Sustainability App", layout="wide")
 
-# Inject custom CSS for dark blue background and text styling
-st.markdown(
-    """
-    <style>
-    body {
-        background-color: #003366;
-        color: white;
-    }
-    .stApp {
-        background-color: #003366;
-        color: white;
-    }
-    .title h1, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-        color: white;
-    }
-    .stMarkdown {
-        color: white;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# App title
+st.title("🌿 DURACAM Sustainability Assessment Platform")
 
 # Sidebar navigation
-section = st.sidebar.radio("Navigate", ["🏠 Home", "📊 Assessment", "🏗️ ROI Simulator"])
+section = st.sidebar.radio("Navigate", ["🏠 Home", "📊 Assessment", "🏗️ ROI Simulator", "📄 Download Report"])
 
-# Main Header
-st.title("🌱 DURACAM")
-st.subheader("Helping companies meet their sustainability goals")
+# Function to calculate total score
+def calculate_score(inputs):
+    return sum(inputs)
 
+# Function to generate pie chart
+def plot_pie(scores, categories):
+    fig, ax = plt.subplots()
+    ax.pie(scores, labels=categories, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')
+    return fig
+
+# Section: Home
 if section == "🏠 Home":
+    st.header("Welcome to DURACAM Sustainability Tool")
     st.markdown("""
-    Welcome to the **DURACAM Sustainability Assessment Tool**.
+    This tool helps you evaluate your organization’s sustainability across multiple areas
+    and simulate ROI improvement opportunities.
 
-    - Evaluate your company’s sustainability across six domains.
-    - Visualize results with charts.
-    - Export a summary PDF.
-    - Simulate ROI with real-time modeling.
-
-    Select **"📊 Assessment"** in the sidebar to begin.
+    Use the sidebar to begin your assessment or explore the ROI simulation tool.
     """)
 
+# Section: Assessment
 elif section == "📊 Assessment":
     st.header("📊 Sustainability Assessment")
 
-    st.markdown("Rate your organization from 1 (Poor) to 10 (Excellent) across the following domains:")
+    categories = [
+        "Environmental Impact", "Social Responsibility", "Economic Viability",
+        "Energy Efficiency", "Waste Management", "Innovation & Technology"
+    ]
 
-    carbon = st.slider("🌍 Carbon Emissions", 1, 10, 5)
-    energy = st.slider("⚡ Energy Usage", 1, 10, 5)
-    waste = st.slider("🗑️ Waste Management", 1, 10, 5)
-    supply_chain = st.slider("🚚 Supply Chain Footprint", 1, 10, 5)
-    circular = st.slider("🔁 Circular Economy Practices", 1, 10, 5)
-    profit = st.slider("💸 Profitability Impact", 1, 10, 5)
+    scores = []
+    for category in categories:
+        score = st.slider(f"{category} Score (0–10)", 0, 10, 5)
+        scores.append(score)
 
-    if st.button("Calculate Score"):
-        scores = [carbon, energy, waste, supply_chain, circular, profit]
-        labels = [
-            "Carbon Emissions", "Energy", "Waste Management",
-            "Supply Chain", "Circular Economy", "Profitability"
-        ]
-        total = sum(scores)
-        average = round(total / len(scores), 2)
+    total_score = calculate_score(scores)
 
-        st.success(f"🌟 Overall Sustainability Score: **{average}/10**")
+    st.subheader(f"🔢 Total Sustainability Score: `{total_score} / 60`")
+    st.pyplot(plot_pie(scores, categories))
 
-        # Pie Chart
-        fig, ax = plt.subplots()
-        ax.pie(scores, labels=labels, autopct='%1.1f%%', startangle=90)
-        ax.axis('equal')
-        st.pyplot(fig, use_container_width=True)
+    # Save scores to session state for later use
+    st.session_state["assessment_scores"] = scores
+    st.session_state["total_score"] = total_score
 
-        # Recommendations
-        st.markdown("### 📌 Recommendations")
-        if average >= 8:
-            st.success("Excellent sustainability profile. Keep leading the way! ✅")
-        elif average >= 5:
-            st.warning("Moderate performance. There’s room to improve on specific areas. ⚠️")
-        else:
-            st.error("Low sustainability score. Urgent improvements recommended. ❗")
-
-        # PDF Export
-        if st.button("📥 Export PDF Report"):
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", size=12)
-            pdf.cell(200, 10, txt="DURACAM Sustainability Report", ln=True, align='C')
-            pdf.ln(10)
-            for label, score in zip(labels, scores):
-                pdf.cell(200, 10, txt=f"{label}: {score}/10", ln=True)
-            pdf.ln(5)
-            pdf.cell(200, 10, txt=f"Overall Score: {average}/10", ln=True)
-            filename = "duracam_sustainability_report.pdf"
-            pdf.output(f"/mnt/data/{filename}")
-            st.success("📄 PDF report generated!")
-            st.download_button("⬇️ Download Report", data=open(f"/mnt/data/{filename}", "rb"), file_name=filename)
-
+# Section: ROI Simulator (external link)
 elif section == "🏗️ ROI Simulator":
     st.header("📈 ROI Simulation Tool")
-    st.markdown("Use the embedded tool below to **simulate your ROI based on sustainability actions**:")
+    st.markdown("""
+    Due to security and platform limitations, the ROI simulator cannot be embedded directly here.
 
-    # Embed external Streamlit ROI simulator
-    st.components.v1.iframe("https://sustainabilitysimulator.streamlit.app/", height=800, scrolling=True)
+    👉 **Click the button below to launch the ROI Simulator in a new tab.**
+    """)
+    st.link_button("🔗 Open Sustainability ROI Simulator", "https://sustainabilitysimulator.streamlit.app/")
+
+# Section: Downloadable Report
+elif section == "📄 Download Report":
+    st.header("📄 Your Sustainability Report")
+
+    if "assessment_scores" not in st.session_state:
+        st.warning("⚠️ Please complete the assessment first.")
+    else:
+        st.subheader("🧾 Summary")
+        for i, category in enumerate(categories):
+            st.write(f"- **{category}**: {st.session_state['assessment_scores'][i]} / 10")
+
+        st.write(f"**Total Score:** `{st.session_state['total_score']} / 60`")
+
+        # Generate downloadable text report
+        report_text = "DURACAM Sustainability Assessment Report\n\n"
+        for i, category in enumerate(categories):
+            report_text += f"{category}: {st.session_state['assessment_scores'][i]} / 10\n"
+        report_text += f"\nTotal Score: {st.session_state['total_score']} / 60"
+
+        st.download_button(
+            label="📥 Download Report as TXT",
+            data=report_text,
+            file_name="sustainability_report.txt",
+            mime="text/plain"
+        )
+
