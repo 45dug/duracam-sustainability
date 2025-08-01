@@ -1,157 +1,96 @@
 import streamlit as st
+import matplotlib.pyplot as plt
 import pandas as pd
-import plotly.express as px
-from fpdf import FPDF
+import base64
+from io import BytesIO
 
-# -----------------------
-# CONFIGURATION & THEME
-# -----------------------
-st.set_page_config(page_title="DURACAM Sustainability Assessment", layout="centered")
-PRIMARY_COLOR = "#005f87"
-BACKGROUND_COLOR = "#f1f5f9"  # Light, professional background
-
-# Custom CSS
-st.markdown(
-    f"""
+# App Styling
+st.markdown("""
     <style>
-        body {{
-            background-color: #005f87;
-            color: #ffffff;
-            font-family: 'Arial', sans-serif;
-        }}
-        .stApp {{
-            background-color: #005f87;
-        }}
-        h1, h2, h3, h4, h5, h6, p, label {{
-            color: #ffffff !important;
-        }}
-        .stButton>button {{
-            background-color: #ffffff;
-            color: #005f87;
-            border: none;
-            border-radius: 6px;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.2s ease-in-out;
-        }}
-        .stButton>button:hover {{
-            background-color: #f0f0f0;
-            color: #003f5c;
-            transform: scale(1.05);
-        }}
-        .stRadio>div {{
-            background-color: #ffffff;
-            color: #000000;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }}
-        .block-container {{
-            max-width: 700px;
-            padding-top: 2rem;
-        }}
+    .main {
+        background-color: #003366;
+        color: white;
+    }
+    div.stButton > button {
+        background-color: #0057b8;
+        color: white;
+        font-weight: bold;
+    }
     </style>
-    """,
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
+# Title and Introduction
+st.title("DURACAM")
+st.subheader("Helping companies meet their sustainability goals")
+st.markdown("""<hr style='border: 2px solid white'>""", unsafe_allow_html=True)
 
+st.header("📊 Sustainability Self-Assessment")
+st.markdown("Fill in your company's status under each category below.")
 
-# -----------------------
-# HEADER
-# -----------------------
-st.image(
-    "https://via.placeholder.com/600x100.png?text=DURACAM+Sustainability+Assessment",
-    use_container_width=True
-)
-st.title("🌱 DURACAM")
-st.markdown("**Helping companies meet their sustainability goals**")
-
-# -----------------------
-# QUESTIONS
-# -----------------------
+# Questionnaire Categories
 categories = {
-    "Carbon Emissions": ["Process choices impact", "Emissions tracking effectiveness"],
-    "Energy": ["Equipment upgrades", "Waste diversion efforts"],
-    "Waste Management": ["Recycling investment", "Waste reduction policies"],
-    "Supply Chain Footprint": ["Transport emissions", "Delivery reliability"],
-    "Circular Economy": ["Reuse incentives", "Product return rates"],
-    "Profitability Impact": ["Pricing strategy", "Green marketing initiatives"],
+    "Carbon Emissions": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
+    "Energy": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
+    "Waste Management": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
+    "Supply Chain Footprint": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
+    "Circular Economy": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
+    "Profitability Impact": ["Very Poor", "Poor", "Average", "Good", "Excellent"]
 }
 
-scores = {}
+score_map = {"Very Poor": 1, "Poor": 2, "Average": 3, "Good": 4, "Excellent": 5}
+user_scores = {}
 
-with st.form("assessment_form"):
-    st.subheader("🔍 Please rate each factor (1 = Very Poor, 5 = Excellent):")
+for cat, options in categories.items():
+    choice = st.selectbox(f"{cat}", options)
+    user_scores[cat] = score_map[choice]
 
-    for category, questions in categories.items():
-        st.markdown(f"### {category}")
-        category_scores = []
-        for q in questions:
-            score = st.radio(
-                f"{q}",
-                options=[1, 2, 3, 4, 5],
-                horizontal=True,
-                key=f"{category}_{q}"
-            )
-            category_scores.append(score)
-        scores[category] = (sum(category_scores) / len(category_scores)) * 20  # Convert to 0-100
+if st.button("Generate Sustainability Report"):
+    # Bar Chart Visualization
+    fig, ax = plt.subplots()
+    ax.bar(user_scores.keys(), user_scores.values(), color='#66b3ff')
+    plt.xticks(rotation=45, ha='right')
+    plt.ylabel("Score (1-5)")
+    plt.title("Sustainability Domain Scores")
+    st.pyplot(fig, use_container_width=True)
 
-    submitted = st.form_submit_button("Calculate My Sustainability Score")
+    # PDF Report Generation
+    report_data = pd.DataFrame.from_dict(user_scores, orient='index', columns=['Score'])
+    report_buf = BytesIO()
+    report_data.to_csv(report_buf)
+    report_buf.seek(0)
+    b64 = base64.b64encode(report_buf.read()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download="duracam_sustainability_report.csv">📥 Download Sustainability Report</a>'
+    st.markdown(href, unsafe_allow_html=True)
 
-# -----------------------
-# RESULTS
-# -----------------------
-if submitted:
-    st.success("✅ Assessment completed! See your results below.")
+st.markdown("""<hr style='border: 2px solid white'>""", unsafe_allow_html=True)
 
-    df = pd.DataFrame(list(scores.items()), columns=["Category", "Score"])
+# ROI Simulation Section
+st.header("📈 ROI Simulation")
 
-    fig = px.pie(
-        df,
-        names="Category",
-        values="Score",
-        title="Your Sustainability Score Breakdown",
-        color_discrete_sequence=px.colors.sequential.Blues
-    )
-    fig.update_traces(textinfo='percent+label', pull=[0.05]*len(scores))
-    st.plotly_chart(fig, use_container_width=True)
+st.markdown("""
+Adjust the fields below to simulate potential return on investment (ROI) for your sustainability project.
+""")
 
-    avg_score = sum(scores.values()) / len(scores)
-    st.metric("🌟 Average Sustainability Score", f"{avg_score:.1f} / 100")
+investment = st.number_input("Investment Cost ($)", min_value=0.0, step=1000.0, format="%.2f")
+savings = st.number_input("Estimated Yearly Savings ($)", min_value=0.0, step=500.0, format="%.2f")
+period = st.slider("Payback Period (Years)", 1, 10, 5)
+impact_score = st.slider("Environmental Benefit Score", 1, 10, 5)
 
-    # Recommendations
-    st.subheader("📌 Recommendations")
-    for category, score in scores.items():
-        if score < 50:
-            st.warning(f"**{category}:** Needs significant improvement. Start with basic sustainability actions.")
-        elif score < 75:
-            st.info(f"**{category}:** Decent progress. Focus on optimizing your strategies.")
-        else:
-            st.success(f"**{category}:** Excellent! Keep maintaining strong practices.")
+if investment > 0:
+    roi = ((savings * period - investment) / investment) * 100
+    st.metric("Predicted ROI (%)", f"{roi:.2f}%")
 
-    # -----------------------
-    # PDF Report
-    # -----------------------
-    def generate_pdf(data: dict, avg: float) -> bytes:
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", "B", 18)
-        pdf.set_text_color(0, 95, 135)
-        pdf.cell(0, 10, "DURACAM Sustainability Report", ln=True, align="C")
-        pdf.set_font("Arial", size=12)
-        pdf.set_text_color(0, 0, 0)
-        pdf.ln(10)
-        for cat, sc in data.items():
-            pdf.cell(0, 10, f"{cat}: {sc:.1f}/100", ln=True)
-        pdf.cell(0, 10, f"Average Score: {avg:.1f}/100", ln=True)
-        pdf.ln(5)
-        pdf.multi_cell(0, 10, "Thank you for using the DURACAM Sustainability Assessment. This report reflects your current performance and highlights areas for improvement.")
-        pdf.output("duracam_report.pdf")
-        with open("duracam_report.pdf", "rb") as f:
-            return f.read()
+    if roi < 0:
+        st.warning("⚠️ Negative ROI. Re-evaluate investment or savings.")
+    elif roi < 50:
+        st.info("ℹ️ Moderate ROI. Consider increasing impact or savings.")
+    else:
+        st.success("✅ High ROI! This looks like a solid investment.")
 
-    pdf_file = generate_pdf(scores, avg_score)
-    st.download_button("📥 Download Your PDF Report", pdf_file, "DURACAM_Sustainability_Report.pdf", "application/pdf")
-
+    # ROI Visualization
+    fig2, ax2 = plt.subplots()
+    ax2.pie([roi, 100 - roi], labels=['ROI', 'Remaining'], autopct='%1.1f%%', startangle=140, colors=['#00cc99', '#d3d3d3'])
+    ax2.axis('equal')
+    st.pyplot(fig2, use_container_width=True)
+else:
+    st.info("Enter investment cost to begin simulation.")
