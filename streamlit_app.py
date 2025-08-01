@@ -1,96 +1,109 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-import pandas as pd
-import base64
-from io import BytesIO
+import numpy as np
+from fpdf import FPDF
 
-# App Styling
-st.markdown("""
+st.set_page_config(page_title="DURACAM Sustainability Tool", layout="centered")
+
+# Inject custom CSS for dark blue background and text styling
+st.markdown(
+    """
     <style>
-    .main {
+    body {
         background-color: #003366;
         color: white;
     }
-    div.stButton > button {
-        background-color: #0057b8;
+    .stApp {
+        background-color: #003366;
         color: white;
-        font-weight: bold;
+    }
+    .title h1, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: white;
+    }
+    .stMarkdown {
+        color: white;
     }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
-# Title and Introduction
-st.title("DURACAM")
+# Sidebar navigation
+section = st.sidebar.radio("Navigate", ["🏠 Home", "📊 Assessment", "🏗️ ROI Simulator"])
+
+# Main Header
+st.title("🌱 DURACAM")
 st.subheader("Helping companies meet their sustainability goals")
-st.markdown("""<hr style='border: 2px solid white'>""", unsafe_allow_html=True)
 
-st.header("📊 Sustainability Self-Assessment")
-st.markdown("Fill in your company's status under each category below.")
+if section == "🏠 Home":
+    st.markdown("""
+    Welcome to the **DURACAM Sustainability Assessment Tool**.
 
-# Questionnaire Categories
-categories = {
-    "Carbon Emissions": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
-    "Energy": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
-    "Waste Management": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
-    "Supply Chain Footprint": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
-    "Circular Economy": ["Very Poor", "Poor", "Average", "Good", "Excellent"],
-    "Profitability Impact": ["Very Poor", "Poor", "Average", "Good", "Excellent"]
-}
+    - Evaluate your company’s sustainability across six domains.
+    - Visualize results with charts.
+    - Export a summary PDF.
+    - Simulate ROI with real-time modeling.
 
-score_map = {"Very Poor": 1, "Poor": 2, "Average": 3, "Good": 4, "Excellent": 5}
-user_scores = {}
+    Select **"📊 Assessment"** in the sidebar to begin.
+    """)
 
-for cat, options in categories.items():
-    choice = st.selectbox(f"{cat}", options)
-    user_scores[cat] = score_map[choice]
+elif section == "📊 Assessment":
+    st.header("📊 Sustainability Assessment")
 
-if st.button("Generate Sustainability Report"):
-    # Bar Chart Visualization
-    fig, ax = plt.subplots()
-    ax.bar(user_scores.keys(), user_scores.values(), color='#66b3ff')
-    plt.xticks(rotation=45, ha='right')
-    plt.ylabel("Score (1-5)")
-    plt.title("Sustainability Domain Scores")
-    st.pyplot(fig, use_container_width=True)
+    st.markdown("Rate your organization from 1 (Poor) to 10 (Excellent) across the following domains:")
 
-    # PDF Report Generation
-    report_data = pd.DataFrame.from_dict(user_scores, orient='index', columns=['Score'])
-    report_buf = BytesIO()
-    report_data.to_csv(report_buf)
-    report_buf.seek(0)
-    b64 = base64.b64encode(report_buf.read()).decode()
-    href = f'<a href="data:file/csv;base64,{b64}" download="duracam_sustainability_report.csv">📥 Download Sustainability Report</a>'
-    st.markdown(href, unsafe_allow_html=True)
+    carbon = st.slider("🌍 Carbon Emissions", 1, 10, 5)
+    energy = st.slider("⚡ Energy Usage", 1, 10, 5)
+    waste = st.slider("🗑️ Waste Management", 1, 10, 5)
+    supply_chain = st.slider("🚚 Supply Chain Footprint", 1, 10, 5)
+    circular = st.slider("🔁 Circular Economy Practices", 1, 10, 5)
+    profit = st.slider("💸 Profitability Impact", 1, 10, 5)
 
-st.markdown("""<hr style='border: 2px solid white'>""", unsafe_allow_html=True)
+    if st.button("Calculate Score"):
+        scores = [carbon, energy, waste, supply_chain, circular, profit]
+        labels = [
+            "Carbon Emissions", "Energy", "Waste Management",
+            "Supply Chain", "Circular Economy", "Profitability"
+        ]
+        total = sum(scores)
+        average = round(total / len(scores), 2)
 
-# ROI Simulation Section
-st.header("📈 ROI Simulation")
+        st.success(f"🌟 Overall Sustainability Score: **{average}/10**")
 
-st.markdown("""
-Adjust the fields below to simulate potential return on investment (ROI) for your sustainability project.
-""")
+        # Pie Chart
+        fig, ax = plt.subplots()
+        ax.pie(scores, labels=labels, autopct='%1.1f%%', startangle=90)
+        ax.axis('equal')
+        st.pyplot(fig, use_container_width=True)
 
-investment = st.number_input("Investment Cost ($)", min_value=0.0, step=1000.0, format="%.2f")
-savings = st.number_input("Estimated Yearly Savings ($)", min_value=0.0, step=500.0, format="%.2f")
-period = st.slider("Payback Period (Years)", 1, 10, 5)
-impact_score = st.slider("Environmental Benefit Score", 1, 10, 5)
+        # Recommendations
+        st.markdown("### 📌 Recommendations")
+        if average >= 8:
+            st.success("Excellent sustainability profile. Keep leading the way! ✅")
+        elif average >= 5:
+            st.warning("Moderate performance. There’s room to improve on specific areas. ⚠️")
+        else:
+            st.error("Low sustainability score. Urgent improvements recommended. ❗")
 
-if investment > 0:
-    roi = ((savings * period - investment) / investment) * 100
-    st.metric("Predicted ROI (%)", f"{roi:.2f}%")
+        # PDF Export
+        if st.button("📥 Export PDF Report"):
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+            pdf.cell(200, 10, txt="DURACAM Sustainability Report", ln=True, align='C')
+            pdf.ln(10)
+            for label, score in zip(labels, scores):
+                pdf.cell(200, 10, txt=f"{label}: {score}/10", ln=True)
+            pdf.ln(5)
+            pdf.cell(200, 10, txt=f"Overall Score: {average}/10", ln=True)
+            filename = "duracam_sustainability_report.pdf"
+            pdf.output(f"/mnt/data/{filename}")
+            st.success("📄 PDF report generated!")
+            st.download_button("⬇️ Download Report", data=open(f"/mnt/data/{filename}", "rb"), file_name=filename)
 
-    if roi < 0:
-        st.warning("⚠️ Negative ROI. Re-evaluate investment or savings.")
-    elif roi < 50:
-        st.info("ℹ️ Moderate ROI. Consider increasing impact or savings.")
-    else:
-        st.success("✅ High ROI! This looks like a solid investment.")
+elif section == "🏗️ ROI Simulator":
+    st.header("📈 ROI Simulation Tool")
+    st.markdown("Use the embedded tool below to **simulate your ROI based on sustainability actions**:")
 
-    # ROI Visualization
-    fig2, ax2 = plt.subplots()
-    ax2.pie([roi, 100 - roi], labels=['ROI', 'Remaining'], autopct='%1.1f%%', startangle=140, colors=['#00cc99', '#d3d3d3'])
-    ax2.axis('equal')
-    st.pyplot(fig2, use_container_width=True)
-else:
-    st.info("Enter investment cost to begin simulation.")
+    # Embed external Streamlit ROI simulator
+    st.components.v1.iframe("https://sustainabilitysimulator.streamlit.app/", height=800, scrolling=True)
